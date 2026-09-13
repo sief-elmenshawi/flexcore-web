@@ -19,7 +19,7 @@ export default function AdminUsersPage() {
 
   const users = useQuery({
     queryKey: ['users', page],
-    queryFn: async () => (await userApi.list({ page, size: 20, sort: 'id,desc' })).data,
+    queryFn: async () => (await userApi.list({ page: page + 1, size: 20, sort: 'id,desc' })).data,
   })
   const roles = useQuery({ queryKey: ['roles'], queryFn: async () => (await roleApi.list()).data })
 

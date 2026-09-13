@@ -24,8 +24,13 @@ api.interceptors.response.use(
   async (error: AxiosError<ErrorResponse>) => {
     const original = error.config as (AxiosRequestConfig & { _retry?: boolean }) | undefined
     const status = error.response?.status
+    const url = original?.url ?? ''
 
-    if (status === 401 && original && !original._retry) {
+    // Login/register/logout returns 401 by nature; attempting an access-token refresh
+    // for those would loop or stamp "session expired" over legitimate auth errors.
+    const isAuthCall = url.includes('/auth/login') || url.includes('/auth/register') || url.includes('/auth/logout')
+
+    if (status === 401 && original && !original._retry && !isAuthCall) {
       const token = getAccessToken()
       // Refresh token itself is expired/invalid -> give up immediately
       if (!token) {
@@ -53,6 +58,12 @@ export function getErrorMessage(error: unknown, t?: (key: string, fallback?: str
   if (axios.isAxiosError<ErrorResponse>(error)) {
     const data = error.response?.data
     if (data) {
+      // Field-level validation errors carry the most specific text; use them first
+      // so the generic "please check the fields" banner never hides the real message.
+      if (data.fieldErrors && Object.keys(data.fieldErrors).length > 0) {
+        const first = Object.values(data.fieldErrors)[0]
+        return typeof first === 'string' ? first.split('\n')[0] : (t ? t('errors.validation') : 'Validation failed')
+      }
       const args = Array.isArray(data.arguments) ? data.arguments : []
       if (t && typeof data.messageKey === 'string') {
         const translated = t(data.messageKey, data.message, ...args)
@@ -65,10 +76,6 @@ export function getErrorMessage(error: unknown, t?: (key: string, fallback?: str
     if (error.response?.status === 403) return t ? t('errors.forbidden') : 'Forbidden'
     if (error.response?.status === 404) return t ? t('errors.notFound') : 'Not Found'
     if (error.response?.status === 409) return t ? t('errors.conflict') : 'Conflict'
-    if (error.response?.status === 400 && data?.fieldErrors) {
-      const first = Object.values(data.fieldErrors)[0]
-      return typeof first === 'string' ? first : (t ? t('errors.validation') : 'Validation failed')
-    }
   }
   return t ? t('errors.network') : 'Network error'
 }

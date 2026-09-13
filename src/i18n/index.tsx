@@ -741,6 +741,25 @@ function interpolate(template: string, args: unknown[]): string {
   })
 }
 
+/**
+ * Resolves a message key. Dotted error keys like {@code "error.auth-required"} live as
+ * flat keys inside the {@code errors} section, so they are checked first; every other key
+ * (e.g. {@code "nav.dashboard"}) is walked as a nested path. This is what makes the
+ * backend's {@code messageKey} values (all {@code error.*}) actually reachable.
+ */
+function resolveMessage(dict: Record<string, unknown>, key: string): unknown {
+  const errors = dict['errors']
+  if (errors && typeof errors === 'object' && key in (errors as Record<string, unknown>)) {
+    return (errors as Record<string, unknown>)[key]
+  }
+  return key.split('.').reduce<unknown>((acc, part) => {
+    if (acc && typeof acc === 'object' && part in (acc as Record<string, unknown>)) {
+      return (acc as Record<string, unknown>)[part]
+    }
+    return undefined
+  }, dict)
+}
+
 function getInitialLang(): Lang {
   const stored = localStorage.getItem(LANG_KEY)
   if (stored === 'ar' || stored === 'en') return stored
@@ -765,21 +784,10 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const t = useCallback(
     (key: string, fallback?: string, ...args: unknown[]) => {
       const dict = messages[lang] as Record<string, unknown>
-      const value = key.split('.').reduce<unknown>((acc, part) => {
-        if (acc && typeof acc === 'object' && part in (acc as Record<string, unknown>)) {
-          return (acc as Record<string, unknown>)[part]
-        }
-        return undefined
-      }, dict)
+      const value = resolveMessage(dict, key)
       if (typeof value === 'string') return interpolate(value, args)
       if (fallback) return interpolate(fallback, args)
-      const enDict = messages.en as unknown as Record<string, unknown>
-      const enValue = key.split('.').reduce<unknown>((acc, part) => {
-        if (acc && typeof acc === 'object' && part in (acc as Record<string, unknown>)) {
-          return (acc as Record<string, unknown>)[part]
-        }
-        return undefined
-      }, enDict)
+      const enValue = resolveMessage(messages.en as unknown as Record<string, unknown>, key)
       return typeof enValue === 'string' ? interpolate(enValue, args) : key
     },
     [lang],
