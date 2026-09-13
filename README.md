@@ -1,5 +1,9 @@
 # FlexCore Web
 
+> **Part of the FlexCore project.** This is the frontend. The backend API lives in a
+> separate repo: **[flexCore-Gym](https://github.com/sief-elmenshawi/flexCore-Gym)**
+> (Java 17 / Spring Boot) — start that one first, this app talks to it over HTTP.
+
 > Frontend for **FlexCore**, a gym management platform. Built with React 19, TypeScript, Ant Design 6, TanStack Query and Vite.
 
 ## Tech Stack
