@@ -1,32 +1,60 @@
-# React + TypeScript + Vite
+# FlexCore Web
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+> Frontend for **FlexCore**, a gym management platform. Built with React 19, TypeScript, Ant Design 6, TanStack Query and Vite.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **React 19 + TypeScript** — type-safe UI
+- **Vite 8** — fast dev server and optimized builds
+- **Ant Design 6** — component library (RTL support for Arabic)
+- **TanStack Query v5** — server state, caching, retries and invalidation
+- **React Router v7** — lazy-loaded routes + auth guards
+- **Axios** — HTTP client with JWT interceptor and refresh-token rotation
 
-## React Compiler
+## Getting Started
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+The dev server runs on `http://localhost:5173`. API requests are proxied to the backend via the Vite dev proxy (`/api` → `http://localhost:8080`), so no CORS configuration is needed locally.
+
+### Environment
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `VITE_API_BASE_URL` | `/api/v1` | Backend base URL (override for production) |
+
+## Features
+
+- **Auth**: login / register with JWT access + rotating refresh tokens; protected routes via `RequireAuth`
+- **Dashboard**: summary of subscriptions, bookings, payments and PT sessions (auto-loaded with TanStack Query)
+- **Roles & Permissions**: per-role permission gating (`RequirePermission`)
+- **RTL + i18n**: full Arabic/English support with `dayjs` locale switching
+- **Localized errors**: the backend returns stable `messageKey` + arguments, resolved through the client i18n dictionary
+
+## Scripts
+
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Start dev server |
+| `npm run build` | Type-check (`tsc -b`) + production build |
+| `npm run preview` | Preview the production build |
+| `npm run lint` | Run Oxlint |
+
+## Project Structure
+
+```
+src/
+  api/          # Axios client, endpoints, types
+  auth/         # AuthContext, RequireAuth, token storage
+  components/   # Shared UI components
+  i18n/         # Localization + RTL
+  layout/       # App layout & navigation
+  pages/        # Route-level pages (admin, member, reports, ...)
+```
+
+## Related
+
+- Backend: [sief-elmenshawi/flexCore-Gym](https://github.com/sief-elmenshawi/flexCore-Gym)
