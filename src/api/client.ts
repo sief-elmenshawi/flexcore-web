@@ -1,11 +1,7 @@
 import axios, { AxiosError, type AxiosRequestConfig } from 'axios'
-import type { AuthResponse, ErrorResponse } from './types'
-import {
-  clearAuth,
-  getAccessToken,
-  getRefreshToken,
-  persistAuth,
-} from './authStorage'
+import type { ErrorResponse } from './types'
+import { clearAuth, getAccessToken } from './authStorage'
+import { refreshAccessToken } from './refreshCoordinator'
 
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '/api/v1'
 
@@ -13,25 +9,6 @@ export const api = axios.create({
   baseURL: BASE_URL,
   headers: { 'Content-Type': 'application/json' },
 })
-
-let refreshPromise: Promise<boolean> | null = null
-
-async function attemptRefresh(): Promise<boolean> {
-  const refreshToken = getRefreshToken()
-  if (!refreshToken) return false
-  try {
-    const { data } = await axios.post<AuthResponse>(
-      `${BASE_URL}/auth/refresh`,
-      { refreshToken },
-      { headers: { 'Content-Type': 'application/json' } },
-    )
-    persistAuth(data)
-    return true
-  } catch {
-    clearAuth()
-    return false
-  }
-}
 
 api.interceptors.request.use((config) => {
   const token = getAccessToken()
@@ -58,9 +35,7 @@ api.interceptors.response.use(
       }
 
       original._retry = true
-      refreshPromise = refreshPromise ?? attemptRefresh().finally(() => (refreshPromise = null))
-      const ok = await refreshPromise
-
+      const ok = await refreshAccessToken()
       if (ok) {
         original.headers = original.headers ?? {}
         ;(original.headers as Record<string, string>).Authorization = `Bearer ${getAccessToken()}`
