@@ -32,6 +32,7 @@ export interface ErrorResponse {
   timestamp: string
   status: number
   error: string
+  messageKey: string
   message: string
   path: string
   fieldErrors?: Record<string, string> | null

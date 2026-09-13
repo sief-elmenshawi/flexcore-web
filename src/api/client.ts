@@ -77,15 +77,14 @@ api.interceptors.response.use(
 export function getErrorMessage(error: unknown, t?: (key: string, fallback?: string, ...args: unknown[]) => string): string {
   if (axios.isAxiosError<ErrorResponse>(error)) {
     const data = error.response?.data
-    if (data?.message) {
-      // Backend returns message key like "error.payment.in-progress" or "error.login.bad-credentials",
-      // plus any interpolation arguments for the localized text.
-      const msg = String(data.message)
-      if (t && msg.startsWith('error.')) {
-        const translated = t(msg, undefined, ...(Array.isArray(data.arguments) ? data.arguments : []))
-        return translated ?? msg
+    if (data) {
+      const args = Array.isArray(data.arguments) ? data.arguments : []
+      if (t && typeof data.messageKey === 'string') {
+        const translated = t(data.messageKey, data.message, ...args)
+        return translated ?? data.message ?? data.messageKey
       }
-      return msg
+      if (data.message) return data.message
+      if (typeof data.messageKey === 'string') return data.messageKey
     }
     if (error.response?.status === 401) return t ? t('errors.unauthorized') : 'Unauthorized'
     if (error.response?.status === 403) return t ? t('errors.forbidden') : 'Forbidden'
